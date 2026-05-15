@@ -1,34 +1,72 @@
-# POI Spatial Sampling & Validation Tool
+# NYC Public Restroom Accessibility Study
 
-## Objective
+A spatial analysis of public and semi-public restroom access across 
+New York City's five boroughs, conducted as part of research at 
+Auburn University's EcoTrans Lab.
 
-This tool was developed to validate the completeness of POI (Point of Interest) datasets by cross-referencing them with the Google Places API. The core motivation was to quantify potential data gaps:
+## Research Question
 
-> "To what extent does our baseline dataset represent the ground truth of urban facilities?"
+Public restrooms are basic urban infrastructure — but their 
+distribution across neighborhoods is uneven in ways that rarely 
+get measured. This project asks: who bears the cost of inadequate 
+restroom access, and does that burden fall disproportionately on 
+specific populations or times of day?
 
----
+## Data Sources
 
-## Rationale
+- **Public restrooms**: NYC Open Data (deduplicated from 6,775 
+  stall-level records to 975 unique facilities)
+- **Semi-public facilities**: Google Places API — cafes, fast food, 
+  pharmacies, gas stations, supermarkets (n=4,111)
+- **Street network**: OpenStreetMap pedestrian network via OSMnx 
+  (936,335 nodes, 2,398,410 edges)
+- **Census geography**: 2025 NYC Census Tracts (TIGER/Line)
+- **Spatial grid**: H3 Resolution 8 hexagonal grid (1,653 cells, 
+  ~400–500m scale)
 
-During my research, I observed significant variance between different POI data sources. To ensure data integrity, I implemented this script to systematically cross-check baseline data against live results from Google’s high-frequency updated database.
+## Analysis Modules
 
----
+### 1. `sampling_check.py` — Data Validation
+Cross-validates the semi-public POI dataset against live Google 
+Places API results to quantify coverage gaps before analysis.
 
-## How it works
+### 2. `cumulative_opportunity.py` — Baseline Accessibility
+Counts reachable facilities within 5, 10, and 15-minute walking 
+circles for each grid cell. Finds that 54.4% of cells have zero 
+restrooms within a 5-minute walk.
 
-The script executes a four-stage pipeline:
+### 3. `temporal_accessibility.py` — Time-of-Day Analysis
+Compares daytime vs. nighttime accessibility using facility 
+opening hours. At night, 641 of 975 public restrooms close, 
+and the share of cells with >10-minute walk times rises from 
+15.7% to 23.3%.
 
-1. **Grid Sampling**  
-   Discretizes geographic bounding boxes into micro-grid cells (Step: 0.002° ≈ 220m at mid-latitudes).
+### 4. `accessibility_disparity.py` — Wheelchair Accessibility Gap
+Compares travel times for general users vs. wheelchair users 
+(restricted to the 577 fully accessible public facilities). 
+In 21.3% of cells, wheelchair users face more than 5 extra 
+minutes of walking.
 
-2. **API Querying**  
-   Performs localized searchText queries at each grid centroid, utilizing locationBias to maximize the recall of neighboring venues.
+### 5. `bathroom_resilience.py` — Network Redundancy
+Measures the penalty of being turned away from the nearest 
+facility — the extra time required to reach the second-nearest 
+option. Median penalty is 1.0 minute citywide, but 14.7% of 
+cells face a penalty over 5 minutes, concentrated in the Bronx, 
+eastern Queens, and Staten Island.
 
-3. **Data Alignment**  
-   Normalizes diverse category labels to align with the Google Places schema.
+## Key Finding
 
-4. **Stability Assessment**  
-   Compares the density of baseline records vs. API records to generate a diagnostic verdict:
-   - **STABLE**: Minimal variance detected.  
-   - **MODERATE_INCREASE**: New POIs identified; update recommended.  
-   - **CHECK_MORE**: Significant discrepancy; requires manual audit.
+The same neighborhoods — Bronx northeast, eastern Queens, 
+Staten Island — appear as deficit areas across every dimension: 
+total supply, daytime accessibility, nighttime coverage, 
+wheelchair access, and network redundancy. This spatial overlap 
+suggests a systemic pattern rather than isolated gaps.
+
+## Tech Stack
+
+Python · GeoPandas · NetworkX (Dijkstra) · PySAL (LISA / 
+Getis-Ord G*) · H3 · Matplotlib · Google Places API · OSMnx
+
+## Status
+
+Analysis complete. Visualization and write-up in progress.
